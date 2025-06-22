@@ -1,51 +1,73 @@
 /** @type {import('tailwindcss').Config} */
+
+import type { Config } from "tailwindcss";
+
 module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
-
-    // Or if using `src` directory:
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   darkMode: ["class"],
   theme: {
     extend: {
       colors: {
-        primary: "rgb(var(--color-primary) / <alpha-value>)",
-        secondary: "rgb(var(--color-secondary) / <alpha-value>)",
-        accent: "rgb(var(--color-accent) / <alpha-value>)",
-        background: "rgb(var(--color-background) / <alpha-value>)",
-        text: "rgb(var(--color-text) / <alpha-value>)",
-        card: "rgb(var(--color-card) / <alpha-value>)",
-        border: "rgb(var(--color-border) / <alpha-value>)",
-        success: "rgb(var(--color-success) / <alpha-value>)",
-        error: "rgb(var(--color-error) / <alpha-value>)",
-        warning: "rgb(var(--color-warning) / <alpha-value>)",
-        info: "rgb(var(--color-info) / <alpha-value>)",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
       },
       animation: {
-        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
       keyframes: {
-        pulse: {
-          "0%, 100%": {
-            opacity: "1",
-          },
-          "50%": {
-            opacity: "0.5",
-          },
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
-      },
-      transitionProperty: {
-        colors:
-          "color, background-color, border-color, text-decoration-color, fill, stroke",
-      },
-      transitionDuration: {
-        200: "200ms",
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
       },
     },
   },
