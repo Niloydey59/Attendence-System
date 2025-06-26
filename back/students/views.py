@@ -4,8 +4,96 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
-from .models import Student, StudentFaceImage
-from .serializers import StudentFaceImageSerializer, StudentFaceImageListSerializer
+from .models import StudentProfile, StudentFaceImage
+from .serializers import StudentFaceImageSerializer, StudentFaceImageListSerializer, StudentProfileSerializer
+
+class StudentProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """Get the authenticated student's profile data"""
+        try:
+            if not hasattr(request.user, 'student_profile'):
+                return Response(
+                    {'error': 'User is not a student'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            student_profile = request.user.student_profile
+            serializer = StudentProfileSerializer(student_profile)
+            
+            return Response({
+                'message': 'Profile data retrieved successfully',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error retrieving profile: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def put(self, request):
+        """Update the authenticated student's profile data"""
+        try:
+            if not hasattr(request.user, 'student_profile'):
+                return Response(
+                    {'error': 'User is not a student'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            student_profile = request.user.student_profile
+            serializer = StudentProfileSerializer(
+                student_profile, 
+                data=request.data, 
+                partial=False
+            )
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'message': 'Profile updated successfully',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error updating profile: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def patch(self, request):
+        """Partially update the authenticated student's profile data"""
+        try:
+            if not hasattr(request.user, 'student_profile'):
+                return Response(
+                    {'error': 'User is not a student'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            student_profile = request.user.student_profile
+            serializer = StudentProfileSerializer(
+                student_profile, 
+                data=request.data, 
+                partial=True
+            )
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'message': 'Profile updated successfully',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error updating profile: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class StudentFaceImageUploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -15,14 +103,14 @@ class StudentFaceImageUploadView(APIView):
         """Upload a new face image for the authenticated student"""
         try:
             # Check if user has a student profile
-            if not hasattr(request.user, 'student'):
+            if not hasattr(request.user, 'student_profile'):
                 return Response(
                     {'error': 'User is not a student'}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
             
             # Check if student already has maximum number of images (limit to 3)
-            student = request.user.student
+            student = request.user.student_profile
             existing_images_count = StudentFaceImage.objects.filter(student=student).count()
             
             if existing_images_count >= 3:
@@ -61,13 +149,13 @@ class StudentFaceImageUploadView(APIView):
     def get(self, request):
         """Get all face images for the authenticated student"""
         try:
-            if not hasattr(request.user, 'student'):
+            if not hasattr(request.user, 'student_profile'):
                 return Response(
                     {'error': 'User is not a student'}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
             
-            student = request.user.student
+            student = request.user.student_profile
             face_images = StudentFaceImage.objects.filter(student=student).order_by('-is_primary', '-uploaded_at')
             
             serializer = StudentFaceImageListSerializer(
@@ -93,13 +181,13 @@ class StudentFaceImageDetailView(APIView):
     def delete(self, request, image_id):
         """Delete a specific face image"""
         try:
-            if not hasattr(request.user, 'student'):
+            if not hasattr(request.user, 'student_profile'):
                 return Response(
                     {'error': 'User is not a student'}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
             
-            student = request.user.student
+            student = request.user.student_profile
             face_image = get_object_or_404(
                 StudentFaceImage, 
                 id=image_id, 
@@ -132,13 +220,13 @@ class StudentFaceImageDetailView(APIView):
     def patch(self, request, image_id):
         """Update image properties (e.g., set as primary)"""
         try:
-            if not hasattr(request.user, 'student'):
+            if not hasattr(request.user, 'student_profile'):
                 return Response(
                     {'error': 'User is not a student'}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
             
-            student = request.user.student
+            student = request.user.student_profile
             face_image = get_object_or_404(
                 StudentFaceImage, 
                 id=image_id, 

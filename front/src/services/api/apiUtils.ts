@@ -1,28 +1,84 @@
 import { AxiosError } from 'axios';
 
-export const handleApiError = (error: unknown) => {
-  if (error instanceof Error) {
-    // Check if it's an Axios error
-    if ((error as AxiosError).isAxiosError) {
-      const axiosError = error as AxiosError;
+export interface ApiError {
+  message: string;
+  status?: number;
+  details?: any;
+}
+
+export const handleApiError = (error: unknown): ApiError => {
+  if (error instanceof AxiosError) {
+    const status = error.response?.status;
+    const data = error.response?.data;
+    
+    // Handle different error formats
+    if (data?.error) {
+      return {
+        message: data.error,
+        status,
+        details: data,
+      };
+    }
+    
+    if (data?.message) {
+      return {
+        message: data.message,
+        status,
+        details: data,
+      };
+    }
+    
+    if (data?.detail) {
+      return {
+        message: data.detail,
+        status,
+        details: data,
+      };
+    }
+    
+    // Handle field errors
+    if (data && typeof data === 'object') {
+      const fieldErrors = Object.entries(data)
+        .map(([field, errors]) => {
+          if (Array.isArray(errors)) {
+            return `${field}: ${errors.join(', ')}`;
+          }
+          return `${field}: ${errors}`;
+        })
+        .join('; ');
       
-      if (axiosError.response && typeof axiosError.response.data === "object" && axiosError.response.data !== null) {
-        const responseData = axiosError.response.data as { 
-          detail?: string;
-          message?: string;
-          error?: string;
+      if (fieldErrors) {
+        return {
+          message: fieldErrors,
+          status,
+          details: data,
         };
-        
-        // Check for different error message fields that might exist in the response
-        const errorMessage = responseData.detail || responseData.message || responseData.error || "An error occurred";
-        throw new Error(errorMessage);
-      } else if (axiosError.request) {
-        throw new Error("No response received from the server");
       }
     }
-    // Rethrow the original error if it's not an Axios error
-    throw error;
+    
+    // Default axios error message
+    return {
+      message: error.message || 'An error occurred',
+      status,
+      details: data,
+    };
   }
-  // If it's not an Error instance, create a generic error
-  throw new Error("An unknown error occurred");
+  
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+    };
+  }
+  
+  return {
+    message: 'An unknown error occurred',
+  };
+};
+
+export const isNetworkError = (error: unknown): boolean => {
+  return error instanceof AxiosError && !error.response;
+};
+
+export const isAuthError = (error: unknown): boolean => {
+  return error instanceof AxiosError && error.response?.status === 401;
 };

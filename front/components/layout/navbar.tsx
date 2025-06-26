@@ -6,12 +6,15 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Container } from "@/components/ui/container";
+import { UserDropdown } from "@/components/ui/user-dropdown";
+import { useAuth } from "@/hooks/use-auth";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
+  const { user, isLoading, isAuthenticated, logout } = useAuth();
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -74,12 +77,22 @@ export function Navbar() {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
-            <Button variant="ghost" asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/register">Get Started</Link>
-            </Button>
+            {!isLoading && (
+              <>
+                {isAuthenticated && user ? (
+                  <UserDropdown user={user} onLogout={logout} />
+                ) : (
+                  <>
+                    <Button variant="ghost" asChild>
+                      <Link href="/login">Login</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link href="/register">Get Started</Link>
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -125,14 +138,57 @@ export function Navbar() {
               >
                 Contact
               </Link>
-              <div className="flex space-x-2 px-3 py-2">
-                <Button variant="ghost" className="flex-1" asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button className="flex-1" asChild>
-                  <Link href="/register">Get Started</Link>
-                </Button>
-              </div>
+
+              {!isLoading && (
+                <>
+                  {isAuthenticated && user ? (
+                    <div className="px-3 py-2 space-y-2">
+                      <div className="text-sm text-muted-foreground">
+                        Logged in as {user.role} (ID: {user.id})
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        asChild
+                      >
+                        <Link
+                          href={
+                            user.role === "STUDENT"
+                              ? "/student/dashboard"
+                              : "/teacher/dashboard"
+                          }
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Dashboard
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-red-600 hover:text-red-600"
+                        onClick={() => {
+                          logout();
+                          setIsOpen(false);
+                        }}
+                      >
+                        Logout
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex space-x-2 px-3 py-2">
+                      <Button variant="ghost" className="flex-1" asChild>
+                        <Link href="/login" onClick={() => setIsOpen(false)}>
+                          Login
+                        </Link>
+                      </Button>
+                      <Button className="flex-1" asChild>
+                        <Link href="/register" onClick={() => setIsOpen(false)}>
+                          Get Started
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}

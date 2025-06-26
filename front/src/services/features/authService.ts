@@ -50,5 +50,13 @@ export const logout = (): void => {
 };
 
 export const isAuthenticated = (): boolean => {
+  if( !localStorage.getItem('access_token') ) 
+  {
+    console.warn("No access token found in localStorage.");
+  }
+  else
+  {
+    console.log("Access token found in localStorage.");
+  } 
   return localStorage.getItem('access_token') !== null;
 };

@@ -16,12 +16,8 @@ class StudentProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.roll_number}"
 
-class Student(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    student_id = models.CharField(max_length=20, unique=True)
-
 class StudentFaceImage(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='face_images')
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='face_images')
     image = models.ImageField(upload_to='student_faces/')
     face_encoding = models.TextField(blank=True, null=True)  # Store face encoding as base64 string
     is_primary = models.BooleanField(default=False)

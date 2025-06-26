@@ -1,9 +1,33 @@
 from rest_framework import serializers
-from .models import Student, StudentFaceImage
+from .models import StudentProfile, StudentFaceImage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import face_recognition
 import numpy as np
 from PIL import Image
+
+class StudentProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    
+    class Meta:
+        model = StudentProfile
+        fields = ['id', 'username', 'email', 'roll_number', 'department', 'semester', 'batch']
+        read_only_fields = ['id', 'username', 'email']
+    
+    def validate_roll_number(self, value):
+        """Ensure roll number is unique when updating"""
+        instance = self.instance
+        if instance and StudentProfile.objects.exclude(pk=instance.pk).filter(roll_number=value).exists():
+            raise serializers.ValidationError("A student with this roll number already exists.")
+        elif not instance and StudentProfile.objects.filter(roll_number=value).exists():
+            raise serializers.ValidationError("A student with this roll number already exists.")
+        return value
+    
+    def validate_semester(self, value):
+        """Validate semester range"""
+        if value < 1 or value > 12:
+            raise serializers.ValidationError("Semester must be between 1 and 12.")
+        return value
 
 class StudentFaceImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,7 +73,7 @@ class StudentFaceImageSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         # Get the student from the request user
-        student = self.context['request'].user.student
+        student = self.context['request'].user.student_profile
         validated_data['student'] = student
         
         # If this is set as primary, remove primary flag from other images

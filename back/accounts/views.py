@@ -18,9 +18,20 @@ class RegisterView(APIView):
             
             # Create profile based on role
             if user.role == 'STUDENT':
-                StudentProfile.objects.create(user=user)
+                StudentProfile.objects.create(
+                    user=user,
+                    roll_number=request.data.get('roll_number', ''),
+                    department=request.data.get('department', ''),
+                    semester=request.data.get('semester', 1),
+                    batch=request.data.get('batch', '')
+                )
             elif user.role == 'TEACHER':
-                TeacherProfile.objects.create(user=user)
+                TeacherProfile.objects.create(
+                    user=user,
+                    employee_id=request.data.get('employee_id', ''),
+                    department=request.data.get('department', ''),
+                    designation=request.data.get('designation', '')
+                )
                 
             token, created = Token.objects.get_or_create(user=user)
             return Response({
