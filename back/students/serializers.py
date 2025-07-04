@@ -76,8 +76,11 @@ class StudentFaceImageSerializer(serializers.ModelSerializer):
         student = self.context['request'].user.student_profile
         validated_data['student'] = student
         
-        # If this is set as primary, remove primary flag from other images
-        if validated_data.get('is_primary', False):
+        # Handle primary image logic safely
+        is_primary = validated_data.get('is_primary', False)
+        
+        if is_primary:
+            # Remove primary flag from other images before creating new one
             StudentFaceImage.objects.filter(student=student, is_primary=True).update(is_primary=False)
         
         return super().create(validated_data)

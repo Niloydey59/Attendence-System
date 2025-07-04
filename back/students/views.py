@@ -121,9 +121,12 @@ class StudentFaceImageUploadView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # If this is the first image, make it primary by default
-            if existing_images_count == 0:
+            # Only set as primary if this is the first image AND not explicitly set in request
+            if existing_images_count == 0 and 'is_primary' not in request.data:
                 request.data['is_primary'] = True
+            elif 'is_primary' not in request.data:
+                # For subsequent images, default to False if not specified
+                request.data['is_primary'] = False
             
             serializer = StudentFaceImageSerializer(
                 data=request.data, 

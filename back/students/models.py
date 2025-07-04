@@ -24,9 +24,17 @@ class StudentFaceImage(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        unique_together = ['student', 'is_primary']  # Only one primary image per student
+        # Remove the problematic unique constraint
+        pass
     
     def save(self, *args, **kwargs):
+        # If this is being set as primary, remove primary from other images
+        if self.is_primary:
+            StudentFaceImage.objects.filter(
+                student=self.student,
+                is_primary=True
+            ).exclude(id=self.id).update(is_primary=False)
+        
         if self.image:
             # Process the image and extract face encoding
             self.extract_face_encoding()
