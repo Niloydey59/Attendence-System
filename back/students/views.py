@@ -6,6 +6,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from .models import StudentProfile, StudentFaceImage
 from .serializers import StudentFaceImageSerializer, StudentFaceImageListSerializer, StudentProfileSerializer
+from teachers.models import Class, ClassEnrollment
+from teachers.serializers import StudentEnrollmentSerializer, ClassSerializer
 
 class StudentProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -255,5 +257,105 @@ class StudentFaceImageDetailView(APIView):
         except Exception as e:
             return Response(
                 {'error': f'Error updating image: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class StudentClassListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """Get available classes for student enrollment"""
+        try:
+            if not hasattr(request.user, 'student_profile'):
+                return Response(
+                    {'error': 'User is not a student'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            student = request.user.student_profile
+            available_classes = Class.objects.filter(
+                batch=student.batch,
+                semester=student.semester
+            ).exclude(
+                enrollments__student=student,
+                enrollments__is_active=True
+            )
+            
+            serializer = ClassSerializer(available_classes, many=True)
+            
+            return Response({
+                'available_classes': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error retrieving classes: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class StudentEnrollmentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        """Enroll student in a class"""
+        try:
+            if not hasattr(request.user, 'student_profile'):
+                return Response(
+                    {'error': 'User is not a student'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            serializer = StudentEnrollmentSerializer(
+                data=request.data, 
+                context={'request': request}
+            )
+            
+            if serializer.is_valid():
+                student = request.user.student_profile
+                class_instance = Class.objects.get(id=serializer.validated_data['class_id'])
+                
+                enrollment = ClassEnrollment.objects.create(
+                    student=student,
+                    class_instance=class_instance
+                )
+                
+                return Response({
+                    'message': 'Enrolled successfully',
+                    'enrollment_id': enrollment.id
+                }, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error enrolling in class: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def get(self, request):
+        """Get student's enrolled classes"""
+        try:
+            if not hasattr(request.user, 'student_profile'):
+                return Response(
+                    {'error': 'User is not a student'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            student = request.user.student_profile
+            enrollments = ClassEnrollment.objects.filter(
+                student=student, 
+                is_active=True
+            ).select_related('class_instance__course')
+            
+            enrolled_classes = [enrollment.class_instance for enrollment in enrollments]
+            serializer = ClassSerializer(enrolled_classes, many=True)
+            
+            return Response({
+                'enrolled_classes': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error retrieving enrolled classes: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

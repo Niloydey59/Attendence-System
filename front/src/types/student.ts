@@ -54,3 +54,33 @@ export interface StudentFaceImageUpdateResponse {
 export interface StudentFaceImageDeleteResponse {
   message: string;
 }
+
+// Add new interfaces for class and enrollment
+export interface Class {
+  id: number;
+  course_id: string;
+  course_name: string;
+  teacher_name: string;
+  batch: string;
+  semester: number;
+  schedule?: string;
+  room_number?: string;
+  created_at: string;
+}
+
+export interface AvailableClassesResponse {
+  available_classes: Class[];
+}
+
+export interface EnrolledClassesResponse {
+  enrolled_classes: Class[];
+}
+
+export interface ClassEnrollmentRequest {
+  class_id: number;
+}
+
+export interface ClassEnrollmentResponse {
+  message: string;
+  enrollment_id: number;
+}

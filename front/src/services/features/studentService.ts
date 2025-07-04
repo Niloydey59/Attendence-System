@@ -9,7 +9,12 @@ import {
   StudentFaceImageListResponse,
   StudentFaceImageUpdateRequest,
   StudentFaceImageUpdateResponse,
-  StudentFaceImageDeleteResponse
+  StudentFaceImageDeleteResponse,
+  // Add new type imports
+  AvailableClassesResponse,
+  EnrolledClassesResponse,
+  ClassEnrollmentRequest,
+  ClassEnrollmentResponse
 } from '@/src/types/student';
 
 export const uploadFaceImage = async (imageData: StudentFaceImageUploadRequest): Promise<StudentFaceImageUploadResponse> => {
@@ -110,6 +115,55 @@ export const updateStudentProfile = async (profileData: StudentProfileUpdateRequ
 export const partialUpdateStudentProfile = async (profileData: StudentProfileUpdateRequest): Promise<StudentProfileResponse> => {
   try {
     const response = await apiClient.patch<StudentProfileResponse>('/students/profile/', profileData);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// New functions for class enrollment
+
+/**
+ * Get list of available classes that the student can enroll in
+ */
+export const getAvailableClasses = async (): Promise<AvailableClassesResponse> => {
+  try {
+    const response = await apiClient.get<AvailableClassesResponse>('/students/classes/');
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+/**
+ * Get list of classes the student is already enrolled in
+ */
+export const getEnrolledClasses = async (): Promise<EnrolledClassesResponse> => {
+  try {
+    const response = await apiClient.get<EnrolledClassesResponse>('/students/enrollments/');
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+/**
+ * Enroll student in a new class
+ */
+export const enrollInClass = async (classId: number): Promise<ClassEnrollmentResponse> => {
+  try {
+    const enrollmentData: ClassEnrollmentRequest = {
+      class_id: classId
+    };
+    
+    const response = await apiClient.post<ClassEnrollmentResponse>(
+      '/students/enrollments/',
+      enrollmentData
+    );
+    
     return response.data;
   } catch (error) {
     handleApiError(error);

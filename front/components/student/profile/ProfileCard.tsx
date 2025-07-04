@@ -32,17 +32,17 @@ import {
 } from "@/src/types/student";
 import { useToast } from "@/hooks/use-toast";
 
-interface StudentProfileCardProps {
+interface ProfileCardProps {
   profile: StudentProfile | null;
   isLoading: boolean;
   onUpdateProfile: (data: StudentProfileUpdateRequest) => Promise<void>;
 }
 
-export function StudentProfileCard({
+export function ProfileCard({
   profile,
   isLoading,
   onUpdateProfile,
-}: StudentProfileCardProps) {
+}: ProfileCardProps) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [formData, setFormData] = React.useState<StudentProfileUpdateRequest>(
