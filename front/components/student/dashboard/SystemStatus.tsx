@@ -65,7 +65,7 @@ export function SystemStatus({
             <p>• Attend classes regularly to maintain good records</p>
             <p>• Enroll in all your relevant courses</p>
             <p>• Update your profile information if it changes</p>
-            <p>• Check attendance records periodically</p>
+            <p>• Check attendance records periodically for accuracy</p>
           </div>
         </CardContent>
       </Card>

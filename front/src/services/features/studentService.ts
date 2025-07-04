@@ -14,7 +14,9 @@ import {
   AvailableClassesResponse,
   EnrolledClassesResponse,
   ClassEnrollmentRequest,
-  ClassEnrollmentResponse
+  ClassEnrollmentResponse,
+  StudentAttendanceRecordsResponse,
+  StudentClassAttendanceResponse
 } from '@/src/types/student';
 
 export const uploadFaceImage = async (imageData: StudentFaceImageUploadRequest): Promise<StudentFaceImageUploadResponse> => {
@@ -164,6 +166,32 @@ export const enrollInClass = async (classId: number): Promise<ClassEnrollmentRes
       enrollmentData
     );
     
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+/**
+ * Get all attendance records for the authenticated student grouped by class
+ */
+export const getStudentAttendanceRecords = async (): Promise<StudentAttendanceRecordsResponse> => {
+  try {
+    const response = await apiClient.get<StudentAttendanceRecordsResponse>('/students/attendance/');
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+/**
+ * Get attendance records for a specific class
+ */
+export const getStudentClassAttendance = async (classId: number): Promise<StudentClassAttendanceResponse> => {
+  try {
+    const response = await apiClient.get<StudentClassAttendanceResponse>(`/students/attendance/class/${classId}/`);
     return response.data;
   } catch (error) {
     handleApiError(error);

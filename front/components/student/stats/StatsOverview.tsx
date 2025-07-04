@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Calendar, Clock, TrendingUp, User } from "lucide-react";
+import { Calendar, Clock, TrendingUp, User, BookOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -9,16 +9,25 @@ import { Badge } from "@/components/ui/badge";
 interface StatsOverviewProps {
   totalClasses?: number;
   attendedClasses?: number;
+  totalSessions?: number;
+  attendanceRate?: number;
   totalImages?: number;
 }
 
 export function StatsOverview({
   totalClasses = 0,
   attendedClasses = 0,
+  totalSessions = 0,
+  attendanceRate,
   totalImages = 0,
 }: StatsOverviewProps) {
+  // Calculate attendance percentage if not provided
   const attendancePercentage =
-    totalClasses > 0 ? (attendedClasses / totalClasses) * 100 : 0;
+    attendanceRate ??
+    (totalSessions > 0
+      ? Math.round((attendedClasses / totalSessions) * 100)
+      : 0);
+
   const imageSetupComplete = totalImages > 0;
 
   const getAttendanceStatus = (percentage: number) => {
@@ -45,27 +54,37 @@ export function StatsOverview({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      {/* Total Classes */}
+      {/* Total Enrolled Classes */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">
+            Enrolled Classes
+          </CardTitle>
+          <BookOpen className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{totalClasses}</div>
-          <p className="text-xs text-muted-foreground">This semester</p>
+          <p className="text-xs text-muted-foreground">
+            {totalClasses === 0 ? "No classes enrolled" : "This semester"}
+          </p>
         </CardContent>
       </Card>
 
-      {/* Attended Classes */}
+      {/* Total Sessions Attended */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Attended</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Sessions Attended
+          </CardTitle>
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{attendedClasses}</div>
-          <p className="text-xs text-muted-foreground">Classes attended</p>
+          <p className="text-xs text-muted-foreground">
+            {totalSessions > 0
+              ? `Out of ${totalSessions} total`
+              : "No sessions yet"}
+          </p>
         </CardContent>
       </Card>
 

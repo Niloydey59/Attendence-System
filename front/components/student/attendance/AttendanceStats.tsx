@@ -1,30 +1,33 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { BarChart, Check, X, BookOpen, TrendingUp } from "lucide-react";
 
 interface AttendanceStatsProps {
   totalClasses: number;
   presentCount: number;
-  lateCount: number;
   absentCount: number;
+  attendancePercentage?: number;
 }
 
 export function AttendanceStats({
   totalClasses,
   presentCount,
-  lateCount,
   absentCount,
+  attendancePercentage,
 }: AttendanceStatsProps) {
-  const attendanceRate =
-    totalClasses > 0
-      ? Math.round(((presentCount + lateCount) / totalClasses) * 100)
-      : 0;
+  const calculatedPercentage =
+    attendancePercentage ??
+    (totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0);
 
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Total Classes
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalClasses}</div>
@@ -33,10 +36,13 @@ export function AttendanceStats({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Present</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-green-600">
+              <Check className="h-4 w-4" />
+              Present
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
+            <div className="text-2xl font-bold text-green-600">
               {presentCount}
             </div>
           </CardContent>
@@ -44,26 +50,30 @@ export function AttendanceStats({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Late</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-red-600">
+              <X className="h-4 w-4" />
+              Absent
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-500">
-              {lateCount}
-            </div>
+            <div className="text-2xl font-bold text-red-600">{absentCount}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Absent</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Percentage
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">{absentCount}</div>
+            <div className="text-2xl font-bold">{calculatedPercentage}%</div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="mt-4">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart className="h-5 w-5" />
@@ -71,53 +81,40 @@ export function AttendanceStats({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Attendance Rate</span>
-                <span className="text-sm font-medium">{attendanceRate}%</span>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Attendance Rate</span>
+                <span className="font-medium">{calculatedPercentage}%</span>
               </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary"
-                  style={{ width: `${attendanceRate}%` }}
-                />
-              </div>
+              <Progress value={calculatedPercentage} className="h-2" />
             </div>
 
-            <div className="pt-6">
-              <p className="text-sm text-muted-foreground mb-4">
-                Attendance Breakdown
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">
+                Breakdown by Status
               </p>
               <div className="space-y-2">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-green-500 mr-2" />
-                  <span className="text-sm">
-                    Present:{" "}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <span className="text-sm">Present</span>
+                  </div>
+                  <span className="text-sm font-medium">
                     {totalClasses > 0
                       ? Math.round((presentCount / totalClasses) * 100)
-                      : 0}
-                    %
+                      : 0}%
                   </span>
                 </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2" />
-                  <span className="text-sm">
-                    Late:{" "}
-                    {totalClasses > 0
-                      ? Math.round((lateCount / totalClasses) * 100)
-                      : 0}
-                    %
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-red-500 mr-2" />
-                  <span className="text-sm">
-                    Absent:{" "}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <span className="text-sm">Absent</span>
+                  </div>
+                  <span className="text-sm font-medium">
                     {totalClasses > 0
                       ? Math.round((absentCount / totalClasses) * 100)
-                      : 0}
-                    %
+                      : 0}%
                   </span>
                 </div>
               </div>
@@ -125,6 +122,9 @@ export function AttendanceStats({
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
     </>
   );
 }

@@ -84,3 +84,59 @@ export interface ClassEnrollmentResponse {
   message: string;
   enrollment_id: number;
 }
+
+// Add new interfaces for student attendance
+export interface StudentAttendanceRecord {
+  id: number;
+  date: string;
+  status: 'PRESENT' | 'ABSENT';
+  marked_at: string;
+  confidence_score: number | null;
+}
+
+export interface StudentClassAttendanceData {
+  class_id: number;
+  class_name: string;
+  course_code: string;
+  section: string;
+  total_sessions: number;
+  present_count: number;
+  absent_count: number;
+  attendance_percentage: number;
+  records: StudentAttendanceRecord[];
+}
+
+export interface StudentAttendanceRecordsResponse {
+  total_classes: number;
+  attendance_by_class: StudentClassAttendanceData[];
+}
+
+export interface ClassInfo {
+  id: number;
+  course_name: string;
+  course_code: string;
+  section: string;
+  teacher: string;
+}
+
+export interface AttendanceSummary {
+  total_sessions: number;
+  present_count: number;
+  absent_count: number;
+  attendance_percentage: number;
+}
+
+export interface StudentClassAttendanceRecord {
+  id: number;
+  date: string;
+  status: 'PRESENT' | 'ABSENT';
+  marked_at: string;
+  confidence_score: number | null;
+  session_id: number;
+}
+
+export interface StudentClassAttendanceResponse {
+  class_info: ClassInfo;
+  attendance_summary: AttendanceSummary;
+  records: StudentClassAttendanceRecord[];
+}

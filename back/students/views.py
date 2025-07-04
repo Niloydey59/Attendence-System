@@ -362,3 +362,157 @@ class StudentEnrollmentView(APIView):
                 {'error': f'Error retrieving enrolled classes: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class StudentAttendanceRecordsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """Get all attendance records for the authenticated student"""
+        try:
+            if not hasattr(request.user, 'student_profile'):
+                return Response(
+                    {'error': 'User is not a student'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            from attendance.models import AttendanceRecord
+            from attendance.serializers import AttendanceRecordSerializer
+            
+            student = request.user.student_profile
+            attendance_records = AttendanceRecord.objects.filter(
+                student=student
+            ).select_related('session', 'session__class_instance', 'session__class_instance__course').order_by('-session__date')
+            
+            # Group records by class
+            records_by_class = {}
+            for record in attendance_records:
+                class_id = record.session.class_instance.id
+                class_name = record.session.class_instance.course.name
+                course_code = record.session.class_instance.course.code
+                section = record.session.class_instance.section
+                
+                if class_id not in records_by_class:
+                    records_by_class[class_id] = {
+                        'class_id': class_id,
+                        'class_name': class_name,
+                        'course_code': course_code,
+                        'section': section,
+                        'total_sessions': 0,
+                        'present_count': 0,
+                        'absent_count': 0,
+                        'attendance_percentage': 0,
+                        'records': []
+                    }
+                
+                records_by_class[class_id]['total_sessions'] += 1
+                if record.status == 'PRESENT':
+                    records_by_class[class_id]['present_count'] += 1
+                else:
+                    records_by_class[class_id]['absent_count'] += 1
+                
+                records_by_class[class_id]['records'].append({
+                    'id': record.id,
+                    'date': record.session.date,
+                    'status': record.status,
+                    'marked_at': record.marked_at,
+                    'confidence_score': record.confidence_score
+                })
+            
+            # Calculate attendance percentage for each class
+            for class_data in records_by_class.values():
+                if class_data['total_sessions'] > 0:
+                    class_data['attendance_percentage'] = round(
+                        (class_data['present_count'] / class_data['total_sessions']) * 100, 2
+                    )
+            
+            return Response({
+                'total_classes': len(records_by_class),
+                'attendance_by_class': list(records_by_class.values())
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error retrieving attendance records: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class StudentClassAttendanceView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, class_id):
+        """Get attendance records for a specific class"""
+        try:
+            if not hasattr(request.user, 'student_profile'):
+                return Response(
+                    {'error': 'User is not a student'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            from attendance.models import AttendanceRecord
+            from teachers.models import Class, ClassEnrollment
+            
+            student = request.user.student_profile
+            
+            # Verify student is enrolled in this class
+            try:
+                enrollment = ClassEnrollment.objects.get(
+                    student=student,
+                    class_instance__id=class_id,
+                    is_active=True
+                )
+                class_instance = enrollment.class_instance
+            except ClassEnrollment.DoesNotExist:
+                return Response(
+                    {'error': 'You are not enrolled in this class'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Get attendance records for this class
+            attendance_records = AttendanceRecord.objects.filter(
+                student=student,
+                session__class_instance=class_instance
+            ).select_related('session').order_by('-session__date')
+            
+            records_data = []
+            present_count = 0
+            total_sessions = attendance_records.count()
+            
+            for record in attendance_records:
+                if record.status == 'PRESENT':
+                    present_count += 1
+                
+                records_data.append({
+                    'id': record.id,
+                    'date': record.session.date,
+                    'status': record.status,
+                    'marked_at': record.marked_at,
+                    'confidence_score': record.confidence_score,
+                    'session_id': record.session.id
+                })
+            
+            attendance_percentage = 0
+            if total_sessions > 0:
+                attendance_percentage = round((present_count / total_sessions) * 100, 2)
+            
+            return Response({
+                'class_info': {
+                    'id': class_instance.id,
+                    'course_name': class_instance.course.name,
+                    'course_code': class_instance.course.code,
+                    'section': class_instance.section,
+                    'teacher': class_instance.teacher.user.username
+                },
+                'attendance_summary': {
+                    'total_sessions': total_sessions,
+                    'present_count': present_count,
+                    'absent_count': total_sessions - present_count,
+                    'attendance_percentage': attendance_percentage
+                },
+                'records': records_data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error retrieving class attendance: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

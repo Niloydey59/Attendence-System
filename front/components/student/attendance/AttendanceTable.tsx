@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Clock, Calendar as CalendarIcon } from "lucide-react";
+import { Check, X, Calendar as CalendarIcon } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,17 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-interface AttendanceRecord {
-  id: number;
-  date: string;
-  status: "present" | "absent" | "late";
-  timestamp: string;
-  classId: number;
-}
+import { StudentClassAttendanceRecord } from "@/src/types/student";
+import { formatDate, formatTime } from "@/src/utils/dateFormatter";
 
 interface AttendanceTableProps {
-  records: AttendanceRecord[];
+  records: StudentClassAttendanceRecord[];
   courseName?: string;
 }
 
@@ -50,44 +44,61 @@ export function AttendanceTable({
         <CardTitle>Attendance History</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableCaption>Your attendance records for {courseName}</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Time</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {records.map((record) => (
-              <TableRow key={record.id}>
-                <TableCell>
-                  {new Date(record.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  {record.status === "present" ? (
-                    <Badge variant="default" className="bg-green-500">
-                      <Check className="h-3 w-3 mr-1" /> Present
-                    </Badge>
-                  ) : record.status === "late" ? (
-                    <Badge
-                      variant="secondary"
-                      className="bg-yellow-500 text-yellow-950"
-                    >
-                      <Clock className="h-3 w-3 mr-1" /> Late
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive">
-                      <X className="h-3 w-3 mr-1" /> Absent
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>{record.timestamp}</TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableCaption>
+              Your attendance records for {courseName}
+            </TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  Time Marked
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Confidence
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {records.map((record) => (
+                <TableRow key={record.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex flex-col">
+                      <span>{formatDate(record.date)}</span>
+                      <span className="text-xs text-muted-foreground sm:hidden">
+                        {record.marked_at ? formatTime(record.marked_at) : "—"}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {record.status === "PRESENT" ? (
+                      <Badge
+                        variant="default"
+                        className="bg-green-500 hover:bg-green-600"
+                      >
+                        <Check className="h-3 w-3 mr-1" /> Present
+                      </Badge>
+                    ) : (
+                      <Badge variant="destructive">
+                        <X className="h-3 w-3 mr-1" /> Absent
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {record.marked_at ? formatTime(record.marked_at) : "—"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {record.confidence_score
+                      ? `${Math.round(record.confidence_score * 100)}%`
+                      : "—"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );
