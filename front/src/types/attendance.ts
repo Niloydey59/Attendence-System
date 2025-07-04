@@ -44,6 +44,7 @@ export interface RecognizedStudent {
   student_name: string;
   roll_number: string;
   confidence: number;
+  timestamp?: string; // Added for UI display
 }
 
 export interface FaceRecognitionResponse {
@@ -54,6 +55,39 @@ export interface FaceRecognitionResponse {
 export interface EndSessionResponse {
   message: string;
   session: AttendanceSession;
+}
+
+export interface DeleteSessionResponse {
+  message: string;
+  deleted_session: {
+    id: number;
+    class_name: string;
+    date: string;
+    records_deleted: number;
+  };
+}
+
+export interface DeleteAllSessionsResponse {
+  message: string;
+  sessions_deleted: number;
+  records_deleted: number;
+}
+
+export interface DeleteRecordResponse {
+  message: string;
+  deleted_record: {
+    id: number;
+    student_name: string;
+    student_roll: string;
+    status: string;
+    session_date: string;
+  };
+}
+
+export interface GetAllSessionsResponse {
+  class_name: string;
+  total_sessions: number;
+  sessions: AttendanceSession[];
 }
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT';

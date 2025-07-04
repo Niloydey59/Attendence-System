@@ -345,16 +345,12 @@ export function CourseList() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Link
-                          href={`/teacher/classes/${classItem.id}/enrollments`}
-                        >
+                        <Link href={`/teacher/enrollments`}>
                           <Button variant="outline" size="sm">
                             View Enrollments
                           </Button>
                         </Link>
-                        <Link
-                          href={`/teacher/classes/${classItem.id}/attendance`}
-                        >
+                        <Link href={`/teacher/attendance`}>
                           <Button size="sm">Take Attendance</Button>
                         </Link>
                       </div>

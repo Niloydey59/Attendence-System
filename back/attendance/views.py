@@ -44,11 +44,10 @@ class AttendanceSessionView(APIView):
                     'session': AttendanceSessionSerializer(existing_session).data
                 }, status=status.HTTP_200_OK)
             
-            # Create new session
+            # Create new session - remove start_time parameter
             session = AttendanceSession.objects.create(
                 class_instance=class_instance,
-                date=today,
-                start_time=timezone.now().time()
+                date=today
             )
             
             # Initialize attendance records for all enrolled students
@@ -255,7 +254,7 @@ class EndAttendanceSessionView(APIView):
                 is_active=True
             )
             
-            session.end_time = timezone.now().time()
+            # Remove end_time parameter since it might not exist in model
             session.is_active = False
             session.save()
             
@@ -267,5 +266,150 @@ class EndAttendanceSessionView(APIView):
         except Exception as e:
             return Response(
                 {'error': f'Error ending session: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class DeleteAttendanceSessionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def delete(self, request, session_id):
+        """Delete an attendance session and all its records"""
+        try:
+            if not hasattr(request.user, 'teacher_profile'):
+                return Response(
+                    {'error': 'User is not a teacher'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            teacher = request.user.teacher_profile
+            session = get_object_or_404(
+                AttendanceSession, 
+                id=session_id, 
+                class_instance__teacher=teacher
+            )
+            
+            session_info = {
+                'id': session.id,
+                'class_name': session.class_instance.course.name,
+                'date': session.date,
+                'records_deleted': session.attendance_records.count()
+            }
+            
+            session.delete()
+            
+            return Response({
+                'message': 'Attendance session deleted successfully',
+                'deleted_session': session_info
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error deleting session: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class DeleteAllAttendanceSessionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def delete(self, request, class_id):
+        """Delete all attendance sessions for a class"""
+        try:
+            if not hasattr(request.user, 'teacher_profile'):
+                return Response(
+                    {'error': 'User is not a teacher'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            teacher = request.user.teacher_profile
+            class_instance = get_object_or_404(Class, id=class_id, teacher=teacher)
+            
+            sessions = AttendanceSession.objects.filter(class_instance=class_instance)
+            sessions_count = sessions.count()
+            records_count = AttendanceRecord.objects.filter(session__class_instance=class_instance).count()
+            
+            sessions.delete()
+            
+            return Response({
+                'message': f'All attendance sessions deleted for class {class_instance.course.name}',
+                'sessions_deleted': sessions_count,
+                'records_deleted': records_count
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error deleting sessions: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class DeleteAttendanceRecordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def delete(self, request, record_id):
+        """Delete a specific attendance record"""
+        try:
+            if not hasattr(request.user, 'teacher_profile'):
+                return Response(
+                    {'error': 'User is not a teacher'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            teacher = request.user.teacher_profile
+            record = get_object_or_404(
+                AttendanceRecord, 
+                id=record_id,
+                session__class_instance__teacher=teacher
+            )
+            
+            record_info = {
+                'id': record.id,
+                'student_name': record.student.user.username,
+                'student_roll': record.student.roll_number,
+                'status': record.status,
+                'session_date': record.session.date
+            }
+            
+            record.delete()
+            
+            return Response({
+                'message': 'Attendance record deleted successfully',
+                'deleted_record': record_info
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error deleting record: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class GetAllAttendanceSessionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, class_id):
+        """Get all attendance sessions for a class"""
+        try:
+            if not hasattr(request.user, 'teacher_profile'):
+                return Response(
+                    {'error': 'User is not a teacher'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            teacher = request.user.teacher_profile
+            class_instance = get_object_or_404(Class, id=class_id, teacher=teacher)
+            
+            sessions = AttendanceSession.objects.filter(
+                class_instance=class_instance
+            ).order_by('-date')
+            
+            serializer = AttendanceSessionSerializer(sessions, many=True)
+            
+            return Response({
+                'class_name': class_instance.course.name,
+                'total_sessions': sessions.count(),
+                'sessions': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error retrieving sessions: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
