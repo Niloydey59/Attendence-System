@@ -55,16 +55,25 @@ export interface StudentFaceImageDeleteResponse {
   message: string;
 }
 
-// Add new interfaces for class and enrollment
+// Update the Class interface to match the actual serializer structure
 export interface Class {
   id: number;
-  course_id: string;
-  course_name: string;
-  teacher_name: string;
+  course?: {
+    id: number;
+    code: string;
+    name: string;
+    department: string;
+    semester: number;
+    credits: number;
+  };
+  course_id?: string; // Keep for backward compatibility
+  course_name?: string; // Keep for backward compatibility
+  section: string;
   batch: string;
   semester: number;
-  schedule?: string;
-  room_number?: string;
+  academic_year: string;
+  enrolled_count: number;
+  teacher_name: string;
   created_at: string;
 }
 

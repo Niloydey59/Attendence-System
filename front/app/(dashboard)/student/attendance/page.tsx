@@ -147,9 +147,9 @@ export default function AttendancePage() {
   };
 
   const currentClassOverview = getCurrentClassData();
-  const currentCourseName = classes.find(
-    (c) => c.id.toString() === selectedClassId
-  )?.course_name;
+  const currentCourseName =
+    classes.find((c) => c.id.toString() === selectedClassId)?.course?.name ||
+    classes.find((c) => c.id.toString() === selectedClassId)?.course_name;
 
   // Statistics Cards Component
   const AttendanceStatsCards = ({
@@ -525,14 +525,25 @@ export default function AttendancePage() {
                       <SelectValue placeholder="Select a class" />
                     </SelectTrigger>
                     <SelectContent>
-                      {classes.map((classItem) => (
-                        <SelectItem
-                          key={classItem.id}
-                          value={classItem.id.toString()}
-                        >
-                          {classItem.course_name} ({classItem.course_id})
-                        </SelectItem>
-                      ))}
+                      {classes.map((classItem) => {
+                        // Handle both nested course object and flat course_name
+                        const courseName =
+                          classItem.course?.name ||
+                          classItem.course_name ||
+                          "Unknown Course";
+                        const courseCode =
+                          classItem.course?.code || classItem.course_id || "";
+
+                        return (
+                          <SelectItem
+                            key={classItem.id}
+                            value={classItem.id.toString()}
+                          >
+                            {courseCode} - {courseName} (Section{" "}
+                            {classItem.section || "N/A"})
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
